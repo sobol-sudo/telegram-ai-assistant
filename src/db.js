@@ -26,12 +26,12 @@ if (!connectionString) {
   console.error(`
 DATABASE_URL is not set.
 
-On Railway:
-1. Project → + New → Database → PostgreSQL
-2. Open your BOT service (not Postgres) → Variables
-3. + New Variable → Add Reference
-4. Select PostgreSQL → pick DATABASE_PRIVATE_URL (or DATABASE_URL)
-5. Redeploy the bot service
+Локально (.env):
+  Postgres → Connect → Public Network → Database URL
+  DATABASE_URL=postgresql://postgres:...@....railway.app:5432/railway
+
+Railway (Variables сервиса бота):
+  Add Reference → PostgreSQL → DATABASE_PRIVATE_URL
 `);
   process.exit(1);
 }
