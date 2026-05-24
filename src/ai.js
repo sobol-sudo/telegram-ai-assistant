@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { getHistory, saveMessage } from "./db.js";
 
 const DEFAULT_AIMLAPI_URL = "https://api.aimlapi.com/v1/chat/completions";
 
@@ -16,14 +17,16 @@ function loadSystemPrompt() {
   return readFileSync(promptFile, "utf8").trim();
 }
 
-export async function askAi(userMessage) {
+export async function askAi(userMessage, userId) {
   const apiKey = process.env.AIMLAPI_KEY || process.env.AI_SERVICE_KEY;
   const apiUrl = process.env.AIMLAPI_URL || DEFAULT_AIMLAPI_URL;
   const model = process.env.AI_MODEL || "openai/gpt-4.1-2025-04-14";
   const systemPrompt = loadSystemPrompt();
+  const history = getHistory(userId);
 
   const messages = [
     { role: "system", content: systemPrompt },
+    ...history,
     { role: "user", content: userMessage },
   ];
 
@@ -47,6 +50,9 @@ export async function askAi(userMessage) {
   if (!content) {
     throw new Error("AIML API returned empty response");
   }
+
+  saveMessage(userId, "user", userMessage);
+  saveMessage(userId, "assistant", content);
 
   return content;
 }

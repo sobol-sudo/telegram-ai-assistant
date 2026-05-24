@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import { Telegraf } from "telegraf";
 import { askAi, splitMessage } from "./ai.js";
+import { clearHistory } from "./db.js";
 
 const { BOT_TOKEN, BOT_MODE = "polling", WEBHOOK_DOMAIN, PORT = "3000" } =
   process.env;
@@ -22,14 +23,19 @@ const bot = new Telegraf(BOT_TOKEN);
 
 bot.start(async (ctx) => {
   await ctx.reply(
-    "Привет! Я помощник Сани.\n\nСаня сейчас в отпуске — я его подменяю в Telegram. Fullstack на TS, поёт и верит в людей, но отдыхает.\n\nНапиши вопрос — помогу, пока хозяин не вернулся.\n\n/help — справка"
+    "Привет! Я помощник Сани.\n\Хозяин сейчас в отпуске — я его подменяю в Telegram.\n\nНапиши вопрос — помогу.\n\n/help — справка"
   );
 });
 
 bot.help(async (ctx) => {
   await ctx.reply(
-    "Саня в отпуске. Я его замена: пиши сообщение — отвечу или помогу с вопросом."
+    "Саня в отпуске. Я его замена: пиши сообщение — отвечу или помогу с вопросом.\n\n/clear — забыть наш диалог и начать с чистого листа"
   );
+});
+
+bot.command("clear", async (ctx) => {
+  clearHistory(ctx.from.id);
+  await ctx.reply("Ок, стёр память нашего чата. Можем начать заново.");
 });
 
 bot.on("text", async (ctx) => {
@@ -40,7 +46,7 @@ bot.on("text", async (ctx) => {
   await ctx.sendChatAction("typing");
 
   try {
-    const answer = await askAi(ctx.message.text);
+    const answer = await askAi(ctx.message.text, ctx.from.id);
 
     for (const chunk of splitMessage(answer)) {
       await ctx.reply(chunk);
