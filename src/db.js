@@ -1,66 +1,82 @@
-import { mkdirSync } from "node:fs";
-import { dirname } from "node:path";
-import Database from "better-sqlite3";
+import pg from "pg";
 
-const DB_PATH = process.env.DB_PATH || "./data/chat.db";
 const HISTORY_LIMIT = Number(process.env.CHAT_HISTORY_LIMIT) || 20;
 
-mkdirSync(dirname(DB_PATH), { recursive: true });
+if (!process.env.DATABASE_URL) {
+  console.error("DATABASE_URL is not set. Add PostgreSQL on Railway and link it to the service.");
+  process.exit(1);
+}
 
-const db = new Database(DB_PATH);
+const pool = new pg.Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL.includes("localhost")
+    ? false
+    : { rejectUnauthorized: false },
+});
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS messages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id TEXT NOT NULL,
-    role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
-    content TEXT NOT NULL,
-    created_at INTEGER NOT NULL
+let initialized = false;
+
+async function initDb() {
+  if (initialized) {
+    return;
+  }
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS messages (
+      id SERIAL PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
+      content TEXT NOT NULL,
+      created_at BIGINT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_messages_user_id ON messages (user_id, id);
+  `);
+
+  initialized = true;
+  console.log("Database ready (PostgreSQL)");
+}
+
+export async function getHistory(userId) {
+  await initDb();
+
+  const { rows } = await pool.query(
+    `SELECT role, content
+     FROM messages
+     WHERE user_id = $1
+     ORDER BY id DESC
+     LIMIT $2`,
+    [String(userId), HISTORY_LIMIT]
   );
 
-  CREATE INDEX IF NOT EXISTS idx_messages_user_id ON messages (user_id, id);
-`);
-
-const selectHistory = db.prepare(`
-  SELECT role, content
-  FROM messages
-  WHERE user_id = ?
-  ORDER BY id DESC
-  LIMIT ?
-`);
-
-const insertMessage = db.prepare(`
-  INSERT INTO messages (user_id, role, content, created_at)
-  VALUES (?, ?, ?, ?)
-`);
-
-const trimHistory = db.prepare(`
-  DELETE FROM messages
-  WHERE user_id = ?
-    AND id NOT IN (
-      SELECT id FROM messages
-      WHERE user_id = ?
-      ORDER BY id DESC
-      LIMIT ?
-    )
-`);
-
-const deleteHistory = db.prepare(`
-  DELETE FROM messages WHERE user_id = ?
-`);
-
-export function getHistory(userId) {
-  return selectHistory.all(String(userId), HISTORY_LIMIT).reverse();
+  return rows.reverse();
 }
 
-export function saveMessage(userId, role, content) {
+export async function saveMessage(userId, role, content) {
+  await initDb();
+
   const id = String(userId);
-  insertMessage.run(id, role, content, Date.now());
-  trimHistory.run(id, id, HISTORY_LIMIT);
+
+  await pool.query(
+    `INSERT INTO messages (user_id, role, content, created_at)
+     VALUES ($1, $2, $3, $4)`,
+    [id, role, content, Date.now()]
+  );
+
+  await pool.query(
+    `DELETE FROM messages
+     WHERE user_id = $1
+       AND id NOT IN (
+         SELECT id FROM messages
+         WHERE user_id = $1
+         ORDER BY id DESC
+         LIMIT $2
+       )`,
+    [id, HISTORY_LIMIT]
+  );
 }
 
-export function clearHistory(userId) {
-  deleteHistory.run(String(userId));
+export async function clearHistory(userId) {
+  await initDb();
+  await pool.query(`DELETE FROM messages WHERE user_id = $1`, [String(userId)]);
 }
-
-console.log(`Database ready: ${DB_PATH}`);

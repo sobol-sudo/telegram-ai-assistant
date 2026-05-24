@@ -22,7 +22,7 @@ export async function askAi(userMessage, userId) {
   const apiUrl = process.env.AIMLAPI_URL || DEFAULT_AIMLAPI_URL;
   const model = process.env.AI_MODEL || "openai/gpt-4.1-2025-04-14";
   const systemPrompt = loadSystemPrompt();
-  const history = getHistory(userId);
+  const history = await getHistory(userId);
 
   const messages = [
     { role: "system", content: systemPrompt },
@@ -51,8 +51,8 @@ export async function askAi(userMessage, userId) {
     throw new Error("AIML API returned empty response");
   }
 
-  saveMessage(userId, "user", userMessage);
-  saveMessage(userId, "assistant", content);
+  await saveMessage(userId, "user", userMessage);
+  await saveMessage(userId, "assistant", content);
 
   return content;
 }

@@ -34,7 +34,7 @@ bot.help(async (ctx) => {
 });
 
 bot.command("clear", async (ctx) => {
-  clearHistory(ctx.from.id);
+  await clearHistory(ctx.from.id);
   await ctx.reply("Ок, стёр память нашего чата. Можем начать заново.");
 });
 
