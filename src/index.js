@@ -22,12 +22,14 @@ const bot = new Telegraf(BOT_TOKEN);
 
 bot.start(async (ctx) => {
   await ctx.reply(
-    "Привет! Я Саня. Напиши мне — отвечу на любой вопрос.\n\n/help — справка"
+    "Привет! Я помощник Сани.\n\nСаня сейчас в отпуске — я его подменяю в Telegram. Fullstack на TS, поёт и верит в людей, но отдыхает.\n\nНапиши вопрос — помогу, пока хозяин не вернулся.\n\n/help — справка"
   );
 });
 
 bot.help(async (ctx) => {
-  await ctx.reply("Просто напиши сообщение — я отвечу.");
+  await ctx.reply(
+    "Саня в отпуске. Я его замена: пиши сообщение — отвечу или помогу с вопросом."
+  );
 });
 
 bot.on("text", async (ctx) => {
@@ -45,7 +47,7 @@ bot.on("text", async (ctx) => {
     }
   } catch (err) {
     console.error("AI request failed:", err);
-    await ctx.reply("Не удалось получить ответ от Сани. Попробуйте позже.");
+    await ctx.reply("Сейчас не могу ответить. Попробуйте позже.");
   }
 });
 
