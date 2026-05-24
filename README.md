@@ -2,6 +2,8 @@
 
 Telegram AI assistant built with **Node.js**, **Telegraf**, **AIML API**, and **PostgreSQL** — featuring per-user conversation memory, editable persona prompts, bilingual replies, and Railway-ready deployment.
 
+https://t.me/autochat_sanya_bot
+
 ## Features
 
 - **Telegram bot** powered by [Telegraf](https://telegraf.js.org/)
