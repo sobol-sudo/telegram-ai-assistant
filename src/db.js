@@ -2,16 +2,48 @@ import pg from "pg";
 
 const HISTORY_LIMIT = Number(process.env.CHAT_HISTORY_LIMIT) || 20;
 
-if (!process.env.DATABASE_URL) {
-  console.error("DATABASE_URL is not set. Add PostgreSQL on Railway and link it to the service.");
+function resolveDatabaseUrl() {
+  if (process.env.DATABASE_URL) {
+    return process.env.DATABASE_URL;
+  }
+
+  if (process.env.DATABASE_PRIVATE_URL) {
+    return process.env.DATABASE_PRIVATE_URL;
+  }
+
+  const { PGHOST, PGUSER, PGPASSWORD, PGDATABASE, PGPORT } = process.env;
+
+  if (PGHOST && PGUSER && PGPASSWORD && PGDATABASE) {
+    return `postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}:${PGPORT || 5432}/${PGDATABASE}`;
+  }
+
+  return null;
+}
+
+const connectionString = resolveDatabaseUrl();
+
+if (!connectionString) {
+  console.error(`
+DATABASE_URL is not set.
+
+On Railway:
+1. Project → + New → Database → PostgreSQL
+2. Open your BOT service (not Postgres) → Variables
+3. + New Variable → Add Reference
+4. Select PostgreSQL → pick DATABASE_PRIVATE_URL (or DATABASE_URL)
+5. Redeploy the bot service
+`);
   process.exit(1);
 }
 
 const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL.includes("localhost")
-    ? false
-    : { rejectUnauthorized: false },
+  connectionString,
+  ssl:
+    connectionString.includes("localhost") ||
+    connectionString.includes("127.0.0.1") ||
+    process.env.PGSSL === "false"
+      ? false
+      : { rejectUnauthorized: false },
 });
 
 let initialized = false;
