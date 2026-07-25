@@ -23,19 +23,19 @@ const bot = new Telegraf(BOT_TOKEN);
 
 bot.start(async (ctx) => {
   await ctx.reply(
-    "Привет! Я помощник Сани.\n\Хозяин сейчас в отпуске — я его подменяю в Telegram.\n\nНапиши вопрос — помогу.\n\n/help — справка"
+    "Hi! I'm Sanya's assistant.\n\nHe's away on vacation right now — I'm covering for him on Telegram.\n\nJust ask me anything — I'll help.\n\n/help — commands"
   );
 });
 
 bot.help(async (ctx) => {
   await ctx.reply(
-    "Саня в отпуске. Я его замена: пиши сообщение — отвечу или помогу с вопросом.\n\n/clear — забыть наш диалог и начать с чистого листа"
+    "Sanya is on vacation. I'm standing in for him: send me a message and I'll answer or help you out.\n\n/clear — forget our conversation and start from a clean slate"
   );
 });
 
 bot.command("clear", async (ctx) => {
   await clearHistory(ctx.from.id);
-  await ctx.reply("Ок, стёр память нашего чата. Можем начать заново.");
+  await ctx.reply("Done, I've wiped our chat history. We can start over.");
 });
 
 bot.on("text", async (ctx) => {
@@ -53,7 +53,7 @@ bot.on("text", async (ctx) => {
     }
   } catch (err) {
     console.error("AI request failed:", err);
-    await ctx.reply("Сейчас не могу ответить. Попробуйте позже.");
+    await ctx.reply("I can't answer right now. Please try again later.");
   }
 });
 
