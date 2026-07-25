@@ -26,11 +26,11 @@ if (!connectionString) {
   console.error(`
 DATABASE_URL is not set.
 
-Локально (.env):
+Locally (.env):
   Postgres → Connect → Public Network → Database URL
   DATABASE_URL=postgresql://postgres:...@....railway.app:5432/railway
 
-Railway (Variables сервиса бота):
+Railway (bot service Variables):
   Add Reference → PostgreSQL → DATABASE_PRIVATE_URL
 `);
   process.exit(1);
