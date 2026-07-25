@@ -37,8 +37,8 @@ https://t.me/autochat_sanya_bot
 ### 1. Clone & install
 
 ```bash
-git clone https://github.com/sobol4156/chat-bot-sanya.git
-cd chat-bot-sanya
+git clone https://github.com/sobol-sudo/telegram-ai-assistant.git
+cd telegram-ai-assistant
 npm install
 ```
 
